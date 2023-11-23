@@ -63,6 +63,7 @@ static FUNC_NORETURN void secondary_init(void *arg)
 #if CONFIG_ZEPHYR_NATIVE_DRIVERS
 #include <sof/trace/trace.h>
 #include <rtos/wait.h>
+#include <intel_adsp_ipc.h>
 
 LOG_MODULE_DECLARE(zephyr, CONFIG_SOF_LOG_LEVEL);
 
@@ -80,6 +81,13 @@ void cpu_notify_state_entry(enum pm_state state)
 
 	if (state == PM_STATE_SOFT_OFF) {
 #ifdef CONFIG_ADSP_IMR_CONTEXT_SAVE
+		if (pm_device_is_busy(INTEL_ADSP_IPC_HOST_DEV)) {
+			/* NOTE: If IPC device is busy it means that during suspend preparations
+			 * it was skipt. We need to shut down this device manually.
+			 */
+			pm_device_action_run(INTEL_ADSP_IPC_HOST_DEV, PM_DEVICE_ACTION_SUSPEND);
+		}
+
 		size_t storage_buffer_size;
 
 		/* allocate IMR global_imr_ram_storage */
@@ -119,6 +127,10 @@ void cpu_notify_state_exit(enum pm_state state)
 #endif
 
 #ifdef CONFIG_ADSP_IMR_CONTEXT_SAVE
+		if (pm_device_is_busy(INTEL_ADSP_IPC_HOST_DEV)) {
+			/* NOTE: see note in cpu_notify_state_entry function. */
+			pm_device_action_run(INTEL_ADSP_IPC_HOST_DEV, PM_DEVICE_ACTION_RESUME);
+		}
 		/* free global_imr_ram_storage */
 		rfree(global_imr_ram_storage);
 		global_imr_ram_storage = NULL;
