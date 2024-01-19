@@ -227,14 +227,20 @@ static int copier_prepare(struct processing_module *mod,
 	case SOF_COMP_HOST:
 		if (!cd->ipc_gtw) {
 			ret = host_common_prepare(cd->hd);
-			if (ret < 0)
+			if (ret < 0) {
+				comp_err(dev, "host_common_prepare return %d", ret);
 				return ret;
+			}
+
 		}
 		break;
 	case SOF_COMP_DAI:
 		ret = copier_dai_prepare(dev, cd);
-		if (ret < 0)
+		if (ret < 0)  {
+			comp_err(dev, "copier_dai_prepare return %d", ret);
 			return ret;
+		}
+
 		break;
 	default:
 		break;

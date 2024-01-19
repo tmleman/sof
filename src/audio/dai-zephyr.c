@@ -967,8 +967,10 @@ int dai_common_prepare(struct dai_data *dd, struct comp_dev *dev)
 	}
 
 	ret = dma_config(dd->chan->dma->z_dev, dd->chan->index, dd->z_config);
-	if (ret < 0)
+	if (ret < 0) {
+		comp_err(dev, "dma_config returns %d", ret);
 		comp_set_state(dev, COMP_TRIGGER_RESET);
+	}
 
 	return ret;
 }

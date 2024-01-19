@@ -358,12 +358,16 @@ int copier_dai_prepare(struct comp_dev *dev, struct copier_data *cd)
 
 	for (int i = 0; i < cd->endpoint_num; i++) {
 		ret = dai_common_config_prepare(cd->dd[i], dev);
-		if (ret < 0)
+		if (ret < 0) {
+			comp_err(dev, "dai_common_config_prepare return %d", ret);
 			return ret;
+		}
 
 		ret = dai_common_prepare(cd->dd[i], dev);
-		if (ret < 0)
+		if (ret < 0) {
+			comp_err(dev, "dai_common_prepare return %d", ret);
 			return ret;
+		}
 	}
 
 	return 0;
