@@ -202,7 +202,7 @@ int module_prepare(struct processing_module *mod,
 	struct module_data *md = &mod->priv;
 	struct comp_dev *dev = mod->dev;
 
-	comp_dbg(dev, "module_prepare() start");
+	comp_dbg(dev, "start");
 
 #if CONFIG_IPC_MAJOR_3
 	if (mod->priv.state == MODULE_IDLE)
@@ -213,7 +213,7 @@ int module_prepare(struct processing_module *mod,
 	if (md->ops->prepare) {
 		ret = md->ops->prepare(mod, sources, num_of_sources, sinks, num_of_sinks);
 		if (ret) {
-			comp_err(dev, "module_prepare() error %d: module specific prepare failed, comp_id %d",
+			comp_err(dev, "error %d: module specific prepare failed, comp_id %d",
 				 ret, dev_comp_id(dev));
 			return ret;
 		}
@@ -231,7 +231,7 @@ int module_prepare(struct processing_module *mod,
 #if CONFIG_IPC_MAJOR_3
 	md->state = MODULE_IDLE;
 #endif
-	comp_dbg(dev, "module_prepare() done");
+	comp_dbg(dev, "done");
 
 	return ret;
 }
