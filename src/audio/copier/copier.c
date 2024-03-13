@@ -263,7 +263,7 @@ static int copier_reset(struct processing_module *mod)
 	struct ipc4_pipeline_registers pipe_reg;
 	struct comp_dev *dev = mod->dev;
 
-	comp_dbg(dev, "copier_reset()");
+	comp_info(dev, "input_total_data_processed = %llu, output_total_data_processed = %llu", cd->input_total_data_processed, cd->output_total_data_processed);
 
 	cd->input_total_data_processed = 0;
 	cd->output_total_data_processed = 0;
