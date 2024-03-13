@@ -594,7 +594,7 @@ static int selector_init(struct processing_module *mod)
 	size_t bs[2];
 	int ret;
 
-	comp_dbg(mod->dev, "selector_init()");
+	comp_info(mod->dev, "selector_init()");
 
 	init_cfg_ext = cfg->init_data;
 	init_cfg_out_fmt = cfg->init_data;
@@ -699,7 +699,7 @@ static int selector_verify_params(struct processing_module *mod,
 	uint32_t in_channels = cd->config.in_channels_count;
 	uint32_t out_channels = cd->config.out_channels_count;
 
-	comp_dbg(dev, "selector_verify_params()");
+	comp_info(dev, "selector_verify_params()");
 
 	/* verify input channels */
 	if (in_channels == 0 || in_channels > SEL_SOURCE_CHANNELS_MAX) {
@@ -738,7 +738,7 @@ static int selector_free(struct processing_module *mod)
 {
 	struct comp_data *cd = module_get_private_data(mod);
 
-	comp_dbg(mod->dev, "selector_free()");
+	comp_info(mod->dev, "selector_free()");
 
 	rfree(cd);
 
@@ -757,7 +757,7 @@ static int selector_params(struct processing_module *mod)
 	struct sof_ipc_stream_params *params = mod->stream_params;
 	int err;
 
-	comp_dbg(mod->dev, "selector_params()");
+	comp_info(mod->dev, "selector_params()");
 
 	set_selector_params(mod, params);
 
@@ -809,11 +809,14 @@ static int selector_process(struct processing_module *mod,
 	struct comp_data *cd = module_get_private_data(mod);
 	uint32_t avail_frames = input_buffers[0].size;
 
-	comp_dbg(mod->dev, "selector_process()");
+	comp_info(mod->dev, "avail_frames = %u", avail_frames);
 
-	if (avail_frames)
+	if (avail_frames) {
 		/* copy selected channels from in to out */
 		cd->sel_func(mod, input_buffers, output_buffers, avail_frames);
+	} else {
+		comp_warn(mod->dev, "no frames!");
+	}
 
 	return 0;
 }
@@ -834,7 +837,7 @@ static int selector_prepare(struct processing_module *mod,
 	size_t sink_size;
 	int ret;
 
-	comp_dbg(dev, "selector_prepare()");
+	comp_info(dev, "selector_prepare()");
 
 	ret = selector_params(mod);
 	if (ret < 0)
@@ -910,7 +913,7 @@ static int selector_reset(struct processing_module *mod)
 {
 	struct comp_data *cd = module_get_private_data(mod);
 
-	comp_dbg(mod->dev, "selector_reset()");
+	comp_info(mod->dev, "selector_reset()");
 
 	cd->source_period_bytes = 0;
 	cd->sink_period_bytes = 0;
