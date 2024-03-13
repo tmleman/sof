@@ -202,7 +202,7 @@ int module_prepare(struct processing_module *mod,
 	struct module_data *md = &mod->priv;
 	struct comp_dev *dev = mod->dev;
 
-	comp_dbg(dev, "module_prepare() start");
+	comp_info(dev, "module_prepare() start");
 
 #if CONFIG_IPC_MAJOR_3
 	if (mod->priv.state == MODULE_IDLE)

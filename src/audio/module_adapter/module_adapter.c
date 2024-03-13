@@ -297,23 +297,28 @@ int module_adapter_prepare(struct comp_dev *dev)
 	uint32_t buff_size; /* size of local buffer */
 	int i = 0;
 
-	comp_dbg(dev, "module_adapter_prepare() start");
+	comp_info(dev, "module_adapter_prepare() start");
 
 	/* Prepare module */
 	if (IS_PROCESSING_MODE_SINK_SOURCE(mod) &&
-	    mod->dev->ipc_config.proc_domain == COMP_PROCESSING_DOMAIN_DP)
+	    mod->dev->ipc_config.proc_domain == COMP_PROCESSING_DOMAIN_DP) {
 		ret = module_adapter_dp_queue_prepare(dev);
-
+		comp_info(dev, "module_adapter_dp_queue_prepare ret = %d", ret);
+	}
 	else if (IS_PROCESSING_MODE_SINK_SOURCE(mod) &&
-		 mod->dev->ipc_config.proc_domain == COMP_PROCESSING_DOMAIN_LL)
+		 mod->dev->ipc_config.proc_domain == COMP_PROCESSING_DOMAIN_LL) {
 		ret = module_adapter_sink_src_prepare(dev);
-
+		comp_info(dev, "module_adapter_sink_src_prepare ret = %d", ret);
+	}
 	else if ((IS_PROCESSING_MODE_RAW_DATA(mod) || IS_PROCESSING_MODE_AUDIO_STREAM(mod)) &&
-		 mod->dev->ipc_config.proc_domain == COMP_PROCESSING_DOMAIN_LL)
+		 mod->dev->ipc_config.proc_domain == COMP_PROCESSING_DOMAIN_LL) {
 		ret = module_prepare(mod, NULL, 0, NULL, 0);
-
-	else
+		comp_info(dev, "module_prepare ret = %d", ret);
+	}
+	else {
+		comp_err(dev, "-EINVAL");
 		ret = -EINVAL;
+	}
 
 	if (ret) {
 		if (ret != PPL_STATUS_PATH_STOP)
