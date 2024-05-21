@@ -253,6 +253,11 @@ void dai_put(struct dai *dai)
 
 	rfree(dai);
 }
+
+const struct device *dai_get_device(uint32_t type, uint32_t index) {
+	return dai_get_zephyr_device(type, index);
+}
+
 #else
 static inline const struct dai_type_info *dai_find_type(uint32_t type)
 {
