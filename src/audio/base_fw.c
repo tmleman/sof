@@ -483,6 +483,54 @@ static int basefw_get_large_config(struct comp_dev *dev,
 						data_offset, data);
 };
 
+/**
+ * Handles the DMA Control IPC message to initialize or modify DMA gateway configuration.
+ *
+ * @param first_block Indicates if this is the first data block in the message.
+ * @param last_block Indicates if this is the last data block in the message.
+ * @param data_offset The offset of the data in the message.
+ * @param data Pointer to the data buffer containing the DMA Control message.
+ * @return 0 on success, negative error code on failure.
+ */
+static int basefw_dma_control(bool first_block,
+			      bool last_block,
+			      uint32_t data_offset,
+			      const char *data)
+{
+	/* Ensure that the message is atomic and contains all necessary information */
+	if (!first_block || !last_block) {
+		tr_err(&ipc_tr, "Non-atomic DMA Control message received");
+		return -EINVAL;
+	}
+
+	/* Cast the data buffer to the ipc4_dma_control structure */
+	struct ipc4_dma_control *dma_control = (struct ipc4_dma_control *)data;
+
+	tr_info(&ipc_tr, "Processing DMA Control, node_id: 0x%x, config_length: %u",
+		dma_control->node_id, dma_control->config_length);
+
+	if (dma_control->config_length > 0) {
+		/* DMA Control is passed using a structure with the same construction as in DAI
+		 * configuration. There is an additional section whose size is not accounted for in
+		 * the config_length field. As a result, the configuration size will always be 0.
+		 */
+		tr_err(&ipc_tr, "The expected size of the data is 0.");
+		return -EINVAL;
+	}
+
+	size_t data_size = data_offset - (sizeof(struct ipc4_dma_control) - sizeof(uint32_t));
+
+	int result = basefw_vendor_dma_control(dma_control->node_id, (const char *)dma_control->config_data, data_size);
+	if (result < 0) {
+		tr_err(&ipc_tr, "DMA gateway configuration failed, error: %d", result);
+		return result;
+	}
+
+	tr_info(&ipc_tr, "DMA Control configuration applied successfully");
+	/* If the configuration is successful, return 0 */
+	return 0;
+}
+
 static int basefw_set_large_config(struct comp_dev *dev,
 				   uint32_t param_id,
 				   bool first_block,
@@ -491,6 +539,8 @@ static int basefw_set_large_config(struct comp_dev *dev,
 				   const char *data)
 {
 	switch (param_id) {
+	case IPC4_DMA_CONTROL:
+		return basefw_dma_control(first_block, last_block, data_offset, data);
 	case IPC4_PERF_MEASUREMENTS_STATE:
 		return set_perf_meas_state(data);
 	case IPC4_SYSTEM_TIME:

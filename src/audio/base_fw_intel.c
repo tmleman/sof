@@ -314,3 +314,46 @@ int basefw_vendor_set_large_config(struct comp_dev *dev,
 
 	return IPC4_UNKNOWN_MESSAGE_TYPE;
 }
+
+inline static bool is_ssp_node_id(uint32_t dma_type)
+{
+	return dma_type == ipc4_i2s_link_output_class ||
+	       dma_type == ipc4_i2s_link_input_class;
+}
+
+int basefw_vendor_dma_control(uint32_t node_id, const char *config_data, size_t data_size)
+{
+	/* This function will handle the DMA Control configuration for SSP DAI.
+	 * The actual implementation will depend on the platform specifics and
+	 * the format of the configuration data.
+	 */
+
+	union ipc4_connector_node_id node = (union ipc4_connector_node_id) node_id;
+
+	tr_info(&basefw_comp_tr, "node_id 0x%x, config_data, data_size", node_id, config_data, data_size);
+	if (is_ssp_node_id(node.f.dma_type)) {
+		/* Parse the configuration data specific to SSP DAI and apply settings */
+		const struct device * dev = dai_get_device(DAI_INTEL_SSP, node.f.v_index);
+
+		if (dev) {
+			tr_info(&basefw_comp_tr, "pm_device_runtime_get");
+			int ret = pm_device_runtime_get(dev);
+			if (ret == 0) {
+				ret = dai_dma_control_set(dev, config_data);
+				tr_info(&basefw_comp_tr, "dma control ret = %d, pm_device_runtime_put", ret);
+				ret = pm_device_runtime_put(dev);
+			}
+
+			tr_info(&basefw_comp_tr, "ret = %d", ret);
+		}
+		else {
+			tr_err(&basefw_comp_tr, "Failed to find the device!");
+		}
+
+		tr_info(&basefw_comp_tr, "SSP DAI DMA Control configuration applied for node_id: 0x%x (index: %d)", node_id, node.f.v_index);
+		return 0;
+	}
+
+	tr_err(&basefw_comp_tr, "Unsupported or invalid node_id: 0x%x for DMA Control", node_id);
+	return -EINVAL;
+}
