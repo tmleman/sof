@@ -11,6 +11,8 @@ manifest:
       url-base: https://github.com/thesofproject
     - name: zephyrproject
       url-base: https://github.com/zephyrproject-rtos
+    - name: tmleman
+      url-base: https://github.com/tmleman
 
   # When upgrading projects here please run git log --oneline in the
   # project and if not too long then include the output in your commit
@@ -43,8 +45,8 @@ manifest:
 
     - name: zephyr
       repo-path: zephyr
-      revision: cbb6199e679c50c75d3ed090852b4993e8b06a8a
-      remote: zephyrproject
+      revision: d4106bf565f7f2cc21c96a49877dd8acce73f722
+      remote: tmleman
 
       # Import some projects listed in zephyr/west.yml@revision
       #
