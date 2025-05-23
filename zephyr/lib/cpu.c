@@ -11,6 +11,12 @@
  */
 
 #include <sof/audio/component.h>
+#if CONFIG_INTEL_ADSP_MIC_PRIVACY
+#include <sof/audio/mic_privacy_manager.h>
+#ifdef CONFIG_ADSP_IMR_CONTEXT_SAVE
+static bool dmic_privacy_enabled = false;
+#endif /* CONFIG_ADSP_IMR_CONTEXT_SAVE */
+#endif /* CONFIG_INTEL_ADSP_MIC_PRIVACY */
 #include <sof/init.h>
 #include <sof/lib/cpu.h>
 #include <sof/lib/pm_runtime.h>
@@ -64,6 +70,7 @@ extern void *global_imr_ram_storage;
  * data integrity across D3 transitions, which is critical for SOF's operation
  * and currently outside the scope of Zephyr's device-level PM capabilities.
  */
+
 static void suspend_dais(void)
 {
 	struct ipc_comp_dev *icd;
@@ -79,6 +86,14 @@ static void suspend_dais(void)
 
 		mod = comp_mod(icd->cd);
 		cd = module_get_private_data(mod);
+#if CONFIG_INTEL_ADSP_MIC_PRIVACY
+		if (cd->mic_priv) {
+			if (mic_privacy_manager_get_policy() == MIC_PRIVACY_FW_MANAGED) {
+				/* Need to store DMIC priv settigs */
+				dmic_privacy_enabled = true;
+			}
+		}
+#endif
 		dd = cd->dd[0];
 		if (dai_remove(dd->dai->dev) < 0) {
 			tr_err(&zephyr_tr, "DAI suspend failed, type %d index %d",
@@ -95,6 +110,13 @@ static void resume_dais(void)
 	struct copier_data *cd;
 	struct dai_data *dd;
 
+#if CONFIG_INTEL_ADSP_MIC_PRIVACY
+	/* Re-initialize mic privacy manager first to ensure proper state
+	 * before DAI resume
+	 */
+	mic_privacy_manager_init();
+#endif
+
 	list_for_item(clist, &ipc_get()->comp_list) {
 		icd = container_of(clist, struct ipc_comp_dev, list);
 		if (icd->type != COMP_TYPE_COMPONENT || dev_comp_type(icd->cd) != SOF_COMP_DAI)
@@ -107,6 +129,23 @@ static void resume_dais(void)
 			tr_err(&zephyr_tr, "DAI resume failed, type %d index %d",
 			       dd->dai->type, dd->dai->index);
 		}
+
+#if CONFIG_INTEL_ADSP_MIC_PRIVACY
+		if (cd->mic_priv) {
+			if (dmic_privacy_enabled) {
+				/* Need to restore DMIC privacy settings */
+				struct mic_privacy_settings settings;
+
+				/* Update privacy settings based on saved state */
+				mic_privacy_fill_settings(&settings, 1);
+				mic_privacy_propagate_settings(&settings);
+				/* Re-enable DMIC IRQ to handle further privacy state changes */
+				mic_privacy_enable_dmic_irq(true);
+				dmic_privacy_enabled = false;
+				tr_dbg(&zephyr_tr, "DMIC privacy settings restored after D3");
+			}
+		}
+#endif
 	}
 }
 #endif /* CONFIG_ADSP_IMR_CONTEXT_SAVE */

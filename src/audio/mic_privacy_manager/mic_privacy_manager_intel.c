@@ -62,11 +62,29 @@ static void enable_fw_managed_irq(bool enable_irq)
 
 void mic_privacy_enable_dmic_irq(bool enable_irq)
 {
+	/* Only proceed if we have a valid device and API */
+	if (!mic_priv_dev || !mic_privacy_api) {
+		LOG_ERR("mic_privacy device or API not initialized");
+		return;
+	}
+
 	if (mic_privacy_api->get_policy() == MIC_PRIVACY_HW_MANAGED) {
-		if (enable_irq)
+		if (enable_irq) {
 			mic_privacy_api->enable_dmic_irq(true, handle_dmic_irq);
-		else
+
+			/* Check current status immediately to handle any transitions during D3 */
+			if (mic_privacy_api->get_dmic_irq_status()) {
+				struct mic_privacy_settings settings;
+				uint32_t mic_disable_status =
+					mic_privacy_api->get_dmic_mic_disable_status();
+
+				mic_privacy_fill_settings(&settings, mic_disable_status);
+				mic_privacy_propagate_settings(&settings);
+				mic_privacy_api->clear_dmic_irq_status();
+			}
+		} else {
 			mic_privacy_api->enable_dmic_irq(false, NULL);
+		}
 	}
 }
 
@@ -84,6 +102,12 @@ int mic_privacy_manager_init(void)
 		LOG_INF("mic_privacy init FW_MANAGED mode");
 		mic_privacy_api->set_fw_managed_mode(true);
 		enable_fw_managed_irq(true);
+	} else if (mic_privacy_policy == MIC_PRIVACY_HW_MANAGED) {
+		/* Check if we're resuming from D3 and need to restore DMIC IRQ */
+		uint32_t mic_disable_status = mic_privacy_api->get_dmic_mic_disable_status();
+
+		/* Restore DMIC IRQ handler regardless of status to ensure we catch changes */
+		mic_privacy_api->enable_dmic_irq(true, handle_dmic_irq);
 	}
 
 	return 0;
