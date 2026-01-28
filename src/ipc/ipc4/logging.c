@@ -112,6 +112,7 @@ static void log_work_handler(struct k_work *work)
 }
 
 static struct k_work_sync ipc4_log_work_sync;
+static bool logs_enabled;
 
 int ipc4_logging_enable_logs(bool first_block,
 			     bool last_block,
@@ -120,6 +121,8 @@ int ipc4_logging_enable_logs(bool first_block,
 {
 	const struct log_backend *log_backend = log_backend_adsp_mtrace_get();
 	const struct ipc4_log_state_info *log_state;
+
+	LOG_INF("ipc4_logging_enable_logs: entry first=%d last=%d size=%u", first_block, last_block, data_offset_or_size);
 
 	if (!(first_block && last_block)) {
 		LOG_ERR("log_state data is expected to be sent as one chunk");
@@ -139,7 +142,16 @@ int ipc4_logging_enable_logs(bool first_block,
 	 */
 	log_state = (const struct ipc4_log_state_info *)data;
 
+	LOG_INF("ipc4_logging_enable_logs: enable=%d aging_timer=%u logs_enabled=%d", 
+		log_state->enable, log_state->aging_timer_period, logs_enabled);
+
 	if (log_state->enable) {
+		if (logs_enabled) {
+			LOG_WRN("ipc4_logging_enable_logs: logs already enabled, skipping re-initialization");
+			return 0;
+		}
+		
+		LOG_INF("ipc4_logging_enable_logs: enabling logs");
 		adsp_mtrace_log_init(mtrace_log_hook);
 
 		k_mutex_init(&log_mutex);
@@ -156,12 +168,18 @@ int ipc4_logging_enable_logs(bool first_block,
 
 		/* Logs enabled, this is the best place to run boot-tests */
 		TEST_RUN_ONCE(sof_run_boot_tests);
+		logs_enabled = true;
+		LOG_INF("ipc4_logging_enable_logs: logs enabled successfully");
 	} else  {
+		LOG_INF("ipc4_logging_enable_logs: disabling logs");
+		logs_enabled = false;
 		k_work_flush_delayable(&log_work, &ipc4_log_work_sync);
 		adsp_mtrace_log_init(NULL);
 		log_backend_disable(log_backend);
+		LOG_INF("ipc4_logging_enable_logs: logs disabled successfully");
 	}
 
+	LOG_INF("ipc4_logging_enable_logs: exit success");
 	return 0;
 }
 

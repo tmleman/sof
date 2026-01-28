@@ -262,8 +262,8 @@ static int pipeline_comp_prepare(struct comp_dev *current,
 	struct pipeline_data *ppl_data = ctx->comp_data;
 	int err;
 
-	pipe_dbg(current->pipeline, "pipeline_comp_prepare(), current->comp.id = 0x%x, dir = %u",
-		 dev_comp_id(current), dir);
+	pipe_info(current->pipeline, "pipeline_comp_prepare(), current->comp.id = 0x%x, dir = %u",
+		  dev_comp_id(current), dir);
 
 	if (!comp_is_single_pipeline(current, ppl_data->start)) {
 		/* ipc4 module is only prepared in its parent pipeline */
@@ -282,9 +282,14 @@ static int pipeline_comp_prepare(struct comp_dev *current,
 			return err;
 	}
 
+	pipe_info(current->pipeline, "calling comp_prepare() for comp 0x%x (state=%d)",
+		  dev_comp_id(current), current->state);
 	err = comp_prepare(current);
-	if (err < 0 || err == PPL_STATUS_PATH_STOP)
+	if (err < 0 || err == PPL_STATUS_PATH_STOP) {
+		pipe_err(current->pipeline, "comp_prepare() failed for comp 0x%x: err=%d",
+			 dev_comp_id(current), err);
 		return err;
+	}
 
 	return pipeline_for_each_comp(current, ctx, dir);
 }

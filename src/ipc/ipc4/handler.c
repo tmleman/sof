@@ -160,11 +160,16 @@ static int ipc4_pcm_params(struct ipc_comp_dev *pcm_dev)
 	}
 
 	/* prepare pipeline audio params */
+	tr_info(&ipc_tr, "ipc: attempting to prepare pipe %d comp %d (state=%d)",
+		pcm_dev->cd->pipeline->pipeline_id,
+		pcm_dev->cd->pipeline->comp_id,
+		pcm_dev->cd->pipeline->status);
 	err = pipeline_prepare(pcm_dev->cd->pipeline, pcm_dev->cd);
 	if (err < 0) {
-		ipc_cmd_err(&ipc_tr, "ipc: pipe %d comp %d prepare failed %d",
+		ipc_cmd_err(&ipc_tr, "ipc: pipe %d comp %d prepare failed %d (state=%d)",
 			    pcm_dev->cd->pipeline->pipeline_id,
-			    pcm_dev->cd->pipeline->comp_id, err);
+			    pcm_dev->cd->pipeline->comp_id, err,
+			    pcm_dev->cd->pipeline->status);
 		goto error;
 	}
 
@@ -309,20 +314,29 @@ int ipc4_pipeline_prepare(struct ipc_comp_dev *ppl_icd, uint32_t cmd)
 		}
 		break;
 	case SOF_IPC4_PIPELINE_STATE_RESET:
+		tr_info(&ipc_tr, "pipeline %d: attempting RESET from state %d", ppl_icd->id, status);
 		switch (status) {
 		case COMP_STATE_INIT:
-			tr_dbg(&ipc_tr, "pipeline %d: reset from init", ppl_icd->id);
+			tr_info(&ipc_tr, "pipeline %d: reset from init", ppl_icd->id);
 			ret = ipc4_pipeline_complete(ipc, ppl_icd->id, cmd);
 			break;
 		case COMP_STATE_READY:
+			tr_info(&ipc_tr, "pipeline %d: reset from ready (no action)", ppl_icd->id);
+			/* No action needed */
+			break;
 		case COMP_STATE_ACTIVE:
+			tr_info(&ipc_tr, "pipeline %d: reset from active (no action)", ppl_icd->id);
+			/* No action needed */
+			break;
 		case COMP_STATE_PAUSED:
+			tr_info(&ipc_tr, "pipeline %d: reset from paused (no action)", ppl_icd->id);
 			/* No action needed */
 			break;
 		default:
 			ipc_cmd_err(&ipc_tr,
-				    "pipeline %d: Invalid state for RESET: %d",
-				    ppl_icd->id, status);
+				    "pipeline %d: Invalid state for RESET: %d (valid: %d,%d,%d,%d)",
+				    ppl_icd->id, status, COMP_STATE_INIT, COMP_STATE_READY,
+				    COMP_STATE_ACTIVE, COMP_STATE_PAUSED);
 			return IPC4_INVALID_REQUEST;
 		}
 

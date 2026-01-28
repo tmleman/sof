@@ -185,8 +185,7 @@ static int aria_prepare(struct processing_module *mod,
 	struct comp_buffer *source, *sink;
 	struct comp_dev *dev = mod->dev;
 	struct aria_data *cd = module_get_private_data(mod);
-
-	comp_info(dev, "aria_prepare()");
+	comp_info(dev, "entry: dev->state=%d", dev->state);
 
 	source = comp_dev_get_first_data_producer(dev);
 	sink = comp_dev_get_first_data_consumer(dev);
@@ -198,9 +197,21 @@ static int aria_prepare(struct processing_module *mod,
 	aria_set_stream_params(source, mod);
 	aria_set_stream_params(sink, mod);
 
+	/* Log detailed format information before validation */
+	comp_info(dev, "aria_prepare: source fmt=%d rate=%d channels=%d",
+		  audio_stream_get_valid_fmt(&source->stream),
+		  audio_stream_get_rate(&source->stream),
+		  audio_stream_get_channels(&source->stream));
+	comp_info(dev, "aria_prepare: sink fmt=%d rate=%d channels=%d",
+		  audio_stream_get_valid_fmt(&sink->stream),
+		  audio_stream_get_rate(&sink->stream),
+		  audio_stream_get_channels(&sink->stream));
+
 	if (audio_stream_get_valid_fmt(&source->stream) != SOF_IPC_FRAME_S24_4LE ||
 	    audio_stream_get_valid_fmt(&sink->stream) != SOF_IPC_FRAME_S24_4LE) {
-		comp_err(dev, "format is not supported");
+		comp_err(dev, "format is not supported: source_fmt=%d (expected=%d), sink_fmt=%d (expected=%d)",
+			 audio_stream_get_valid_fmt(&source->stream), SOF_IPC_FRAME_S24_4LE,
+			 audio_stream_get_valid_fmt(&sink->stream), SOF_IPC_FRAME_S24_4LE);
 		return -EINVAL;
 	}
 
@@ -209,7 +220,9 @@ static int aria_prepare(struct processing_module *mod,
 		return 0;
 	}
 
+	comp_info(dev, "calling comp_set_state: current state=%d", dev->state);
 	ret = comp_set_state(dev, COMP_TRIGGER_PREPARE);
+	comp_info(dev, "comp_set_state returned: ret=%d, new state=%d", ret, dev->state);
 	if (ret < 0)
 		return ret;
 
