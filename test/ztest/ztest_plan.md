@@ -122,12 +122,12 @@ Migrate all 56 existing CMock-based unit tests to Zephyr's native ztest framewor
 
 | Test Name | Status | PR Link | Notes |
 |-----------|--------|---------|-------|
-| `scalar_power` | ✅ Complete | [#10364](https://github.com/thesofproject/sof/pull/10364) | Scalar power operations - test implementation complete |
+| `scalar_power` | ✅ Complete | [#10364](https://github.com/thesofproject/sof/pull/10364) | Scalar power operations |
 | `base2_logarithm` | ✅ Complete | [#10590](https://github.com/thesofproject/sof/pull/10590) | Base-2 logarithm |
 | `exponential` | ✅ Complete | [#10590](https://github.com/thesofproject/sof/pull/10590) | Exponential function |
-| `square_root` | 🔄 In Progress | [#10764](https://github.com/thesofproject/sof/pull/10764) | Square root |
-| `base_10_logarithm` | 🔄 In Progress | [#10764](https://github.com/thesofproject/sof/pull/10764) | Base-10 logarithm |
-| `base_e_logarithm` | 🔄 In Progress | [#10764](https://github.com/thesofproject/sof/pull/10764) | Natural logarithm |
+| `square_root` | ✅ Complete | [#10764](https://github.com/thesofproject/sof/pull/10764) | Square root |
+| `base_10_logarithm` | ✅ Complete | [#10764](https://github.com/thesofproject/sof/pull/10764) | Base-10 logarithm |
+| `base_e_logarithm` | ✅ Complete | [#10764](https://github.com/thesofproject/sof/pull/10764) | Natural logarithm |
 
 *Audio Processing Math (7 tests)*
 
@@ -304,13 +304,11 @@ math/dsp/processing/       (3 tests) - Week 7-8
 
 ## Phase-Based Approach
 
-## Phase-Based Approach
-
 | Phase | Scope | Key Deliverables |
 |-------|-------|------------------|
 | ~~Phase 1~~ | ~~PoC Integration~~ | ~~Merge PoC to main, establish dual architecture~~ |
-| **Phase 2** | Basic Unit Tests | Math, string, library functions (native_sim only) |
-| **Phase 3** | Advanced Unit Tests | Complex math, audio processing math (native_sim only) |
+| ~~Phase 2~~ | ~~Basic Unit Tests~~ | ~~Math, string, library functions (native_sim only)~~ |
+| **Phase 3** | Advanced Unit Tests | Complex math, audio processing math (native_sim only); **next active phase** |
 | **Phase 4** | Integration Tests | Pipeline, modules, audio components (multi-platform) |
 
 ## Test Architecture
