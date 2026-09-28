@@ -74,6 +74,33 @@ component interactions, pipelines, or platform-specific behavior belong below
 - Keep includes minimal. Remove unused headers, especially headers that define large static
   reference tables.
 
+### Memory allocation and sanitizers
+
+- Do not add per-suite `malloc()`-backed copies of `rmalloc()`/`rzalloc()`/`rfree()`/
+  `sof_heap_alloc()`. Link the real `zephyr/lib/alloc.c` and add
+  `CONFIG_SYS_HEAP_BIG_ONLY=y` to `prj.conf` (its native_sim heap is 256 KiB). Suites that
+  need the module allocator but not `module/generic.c` link
+  `test/ztest/unit/common/mod_alloc.c`, which forwards `mod_alloc_ext()`/
+  `mod_balloc_align()`/`mod_free()` to the SOF heap. `common/alloc.c` remains for suites
+  that replace the allocator through `-Wl,--wrap`.
+- `zephyr/lib/alloc.c` provides two native_sim back ends: the Zephyr `sys_heap`
+  (default, same allocator as firmware) and host `malloc()`/`free()` through
+  `nsi_host_malloc()` (`CONFIG_SOF_NATIVE_SIM_HOST_HEAP=y`). ASan and LSan cannot see blocks
+  carved out of the static `sys_heap` arena, so add a second `<scenario>.host_heap`
+  scenario with `extra_configs: [CONFIG_SOF_NATIVE_SIM_HOST_HEAP=y]` (see
+  `math/fft/testcase.yaml`).
+- Every allocation made by a test case must be freed by that test case. Check with:
+
+  ```sh
+  DEBUGINFOD_URLS= west twister --platform native_sim -T <suite dir> \
+  	--enable-asan --enable-lsan --inline-logs
+  ```
+
+  Clear `DEBUGINFOD_URLS` (or set `ASAN_OPTIONS=symbolize=0`): otherwise
+  `llvm-symbolizer` queries debuginfod while LSan prints the leak report, which takes
+  longer than twister's post-verdict grace period. Twister then kills the binary,
+  ignores its exit code and reports the leaking suite as passed.
+
 ### ztest metadata and style
 
 - Add or update `CMakeLists.txt`, `prj.conf`, and `testcase.yaml` with the test source.

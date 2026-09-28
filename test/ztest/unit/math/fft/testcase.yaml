@@ -23,3 +23,11 @@ tests:
     platform_allow:
       - native_sim
     build_only: false
+  sof.unit.math.fft.host_heap:
+    # SOF heap routed to host malloc()/free() so ASan/LSan and Valgrind
+    # (twister --enable-asan --enable-lsan / --enable-valgrind) can see it
+    platform_allow:
+      - native_sim
+    build_only: false
+    extra_configs:
+      - CONFIG_SOF_NATIVE_SIM_HOST_HEAP=y

@@ -36,9 +36,16 @@ target_compile_options(app PRIVATE
 	-Wno-error=deprecated-declarations
 )
 
+# Keep full ASan/LSan allocation stacks (twister --enable-asan --enable-lsan)
+if(CONFIG_ASAN)
+	target_compile_options(app PRIVATE -fno-omit-frame-pointer)
+endif()
+
 target_sources(app PRIVATE
 	test_fft_ztest.c
-	fft_test_alloc.c
+	fft_test_sof.c
+	${SOF_ROOT}/test/ztest/unit/common/mod_alloc.c
+	${SOF_ROOT}/zephyr/lib/alloc.c
 	${SOF_ROOT}/test/cmocka/src/notifier_mocks.c
 	${SOF_ROOT}/src/math/fft/fft_common.c
 	${SOF_ROOT}/src/math/fft/fft_16.c
