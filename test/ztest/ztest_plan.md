@@ -133,13 +133,13 @@ Migrate all 56 existing CMock-based unit tests to Zephyr's native ztest framewor
 
 | Test Name | Status | PR Link | Notes |
 |-----------|--------|---------|-------|
-| `a_law_codec` | ⏳ Pending | - | A-law codec |
-| `mu_law_codec` | ⏳ Pending | - | Mu-law codec |
-| `fft` | ⏳ Pending | - | Fast Fourier Transform |
-| `window` | ⏳ Pending | - | Window functions |
-| `matrix` | ⏳ Pending | - | Matrix operations |
-| `auditory` | ⏳ Pending | - | Auditory processing |
-| `dct` | ⏳ Pending | - | Discrete Cosine Transform |
+| `a_law_codec` | ✅ Complete | [#11238](https://github.com/thesofproject/sof/pull/11238) | A-law codec |
+| `mu_law_codec` | ✅ Complete | [#11238](https://github.com/thesofproject/sof/pull/11238) | Mu-law codec |
+| `fft` | 🔄 In Progress | - | Fast Fourier Transform |
+| `window` | 🔄 In Progress | - | Window functions |
+| `matrix` | 🔄 In Progress | - | Matrix operations |
+| `auditory` | 🔄 In Progress | - | Auditory processing |
+| `dct` | 🔄 In Progress | - | Discrete Cosine Transform |
 
 **Status Legend:**
 - ⏳ **Pending**: Not yet started
