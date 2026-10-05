@@ -50,11 +50,31 @@ __cold int template_set_config(struct processing_module *mod,
 	return -EINVAL;
 }
 
-/* Not used in IPC4 systems, if IPC4 only component, omit .get_configuration set */
+/**
+ * \brief Read back a control value, not supported by this component.
+ *
+ * Not used in IPC4 systems, if IPC4 only component, omit .get_configuration set.
+ *
+ * \param[in] mod Processing module pointer.
+ * \param[in] config_id Parameter ID of the requested control.
+ * \param[in,out] data_offset_size On entry the host supplied data offset/size,
+ *		  on exit the number of bytes placed into \a fragment.
+ * \param[out] fragment Reply payload buffer.
+ * \param[in] fragment_size Capacity of \a fragment in bytes.
+ * \return -EINVAL, this component has no readable IPC4 controls.
+ */
 __cold int template_get_config(struct processing_module *mod,
 			       uint32_t config_id, uint32_t *data_offset_size,
 			       uint8_t *fragment, size_t fragment_size)
 {
 	assert_can_be_cold();
-	return 0;
+
+	/* Nothing is written to the reply buffer, so report an empty payload.
+	 * Returning success while leaving *data_offset_size at the host supplied
+	 * value would make the reply claim a payload that was never produced.
+	 */
+	*data_offset_size = 0;
+
+	comp_err(mod->dev, "No readable control, get_config is not supported.");
+	return -EINVAL;
 }
