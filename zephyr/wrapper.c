@@ -353,6 +353,13 @@ static bool sof_boot_test_fault_expected(void)
 void k_sys_fatal_error_handler(unsigned int reason,
 			       const struct arch_esf *esf)
 {
+#ifndef CONFIG_SOF_BOOT_TEST_STANDALONE
+	/** Set once the host panic notification has been attempted, to keep a
+	 * fault raised from within this handler from recursing back into it.
+	 */
+	static bool in_fatal_error_handler;
+#endif
+
 	ARG_UNUSED(esf);
 
 #if CONFIG_SOF_BOOT_TEST
@@ -367,7 +374,17 @@ void k_sys_fatal_error_handler(unsigned int reason,
 
 	/* IPC not set up in standalone test mode */
 #ifndef CONFIG_SOF_BOOT_TEST_STANDALONE
-	ipc_send_panic_notification();
+	/* A fault taken while handling a fault re-enters this function. That
+	 * happens e.g. when the faulting context already holds ipc->lock, which
+	 * ipc_send_panic_notification() takes again, tripping the spinlock
+	 * validator. Without this guard the handler recurses until the thread
+	 * stack is exhausted and the original panic is lost. Notify the host on
+	 * the first entry only.
+	 */
+	if (!in_fatal_error_handler) {
+		in_fatal_error_handler = true;
+		ipc_send_panic_notification();
+	}
 #endif
 
 #if defined(CONFIG_ARCH_POSIX) || defined(CONFIG_ZEPHYR_POSIX)
