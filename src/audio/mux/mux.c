@@ -245,7 +245,7 @@ static int demux_process(struct processing_module *mod,
 
 	comp_dbg(dev, "entry");
 
-	if (sources == NULL && sources[0] == NULL) {
+	if (!sources || !sources[0]) {
 		return 0;
 	}
 	source = sources[0];
