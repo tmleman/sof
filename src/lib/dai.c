@@ -163,6 +163,10 @@ __cold void dai_group_put(struct dai_group *group)
 
 #if CONFIG_ZEPHYR_NATIVE_DRIVERS
 
+#if CONFIG_SOF_FUZZ_DAI_STUB
+#include <platform/lib/dai_stub.h>
+#endif
+
 #define GET_DEVICE_LIST(node) DEVICE_DT_GET(node),
 
 const struct device *zephyr_dev[] = {
@@ -273,7 +277,14 @@ const struct device *z_impl_dai_get_device(enum sof_ipc_dai_type type, uint32_t 
 			return zephyr_dev[i];
 	}
 
+#if CONFIG_SOF_FUZZ_DAI_STUB
+	/* native_sim has no devicetree DAI nodes, fall back to the fuzz
+	 * stub devices, see src/platform/posix/dai_stub.c
+	 */
+	return sof_fuzz_dai_stub_get_device(z_type, index);
+#else
 	return NULL;
+#endif
 }
 
 static void dai_set_device_params(struct dai *d)

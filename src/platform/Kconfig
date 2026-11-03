@@ -88,6 +88,18 @@ config ZEPHYR_POSIX_FUZZ_TICKS
          following a unit-test style case, so the default is short to
          prevent interaction with regular timer workloads.
 
+config SOF_FUZZ_DAI_STUB
+       bool "Register stub DAI devices for IPC fuzzing"
+       depends on ZEPHYR_NATIVE_DRIVERS
+       default y
+       help
+         Register stub Zephyr DAI devices (SSP, DMIC, HDA, ALH and UAOL
+         at indices 0 and 1) so IPC-created DAI endpoints can be
+         instantiated on native_sim. The native_sim devicetree provides
+         no DAI nodes, so without the stubs every DAI gateway copier
+         fails in dai_get() with -ENODEV and the DAI, pipeline streaming
+         and module processing paths are unreachable by the fuzzer.
+
 endif # ZEPHYR_POSIX && ARCH_POSIX_LIBFUZZER
 
 config IMX8
